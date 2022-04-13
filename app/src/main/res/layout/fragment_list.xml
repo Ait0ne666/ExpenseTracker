@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.ait0ne.expensetracker.ui.viewmodels.ExpensesListViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="40dp"
+
+        >
+
+        <LinearLayout
+            android:id="@+id/llMonth"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:background="@drawable/gradient_main"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvCurrentMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{viewModel.monthString}"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true"
+                />
+
+            <TextView
+                android:id="@+id/tvMonthTotal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="28sp" />
+        </LinearLayout>
+        <Spinner
+            android:id="@+id/sCategory"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+
+            app:layout_constraintTop_toBottomOf="@id/llMonth"
+            app:layout_constraintBottom_toTopOf="@id/rvExpensesList"
+            app:layout_constraintRight_toRightOf="parent"
+            android:textSize="12sp"
+            android:spinnerMode="dropdown"
+            android:background="@null"
+            android:selectedItemPosition="@={viewModel.selectedCategory}"
+            />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvExpensesList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/sCategory"
+
+            android:paddingHorizontal="5dp"
+            />
+        <ProgressBar
+            android:id="@+id/pbExpensesLoader"
+
+            app:layout_constraintTop_toTopOf="@id/rvExpensesList"
+            app:layout_constraintBottom_toBottomOf="@id/rvExpensesList"
+            app:layout_constraintLeft_toLeftOf="@id/rvExpensesList"
+            app:layout_constraintRight_toRightOf="@id/rvExpensesList"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:elevation="50dp"
+            android:indeterminateTint="@color/purple_500"
+            android:visibility="gone"
+            />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

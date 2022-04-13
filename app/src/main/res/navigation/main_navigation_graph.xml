@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_navigation_graph"
+    app:startDestination="@id/mainFragment">
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.ait0ne.expensetracker.fragments.MainFragment"
+        android:label="MainFragment" />
+    <fragment
+        android:id="@+id/listFragment"
+        android:name="com.ait0ne.expensetracker.fragments.ListFragment"
+        android:label="ListFragment" >
+        <action
+            android:id="@+id/action_listFragment_to_expenseFragment"
+            app:destination="@id/expenseFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/graphFragment"
+        android:name="com.ait0ne.expensetracker.fragments.graphFragment"
+        android:label="graphFragment" />
+    <fragment
+        android:id="@+id/expenseFragment"
+        android:name="com.ait0ne.expensetracker.fragments.ExpenseFragment"
+        android:label="ExpenseFragment" >
+        <argument
+            android:name="expense"
+            app:argType="com.ait0ne.expensetracker.models.ExpenseDTO" />
+    </fragment>
+</navigation>

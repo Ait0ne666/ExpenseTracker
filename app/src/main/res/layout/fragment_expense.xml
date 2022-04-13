@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    >
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.ait0ne.expensetracker.ui.viewmodels.ExpenseViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="?attr/actionBarSize"
+        android:paddingHorizontal="30dp"
+        >
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/etAmountContainer"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:expandedHintEnabled="false"
+
+            app:hintEnabled="false"
+            app:layout_constraintBottom_toTopOf="@id/etDescriptionContainer"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+
+            >
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAmount"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:background="@drawable/cornered_border_large_radius"
+                android:digits="0123456789."
+                android:drawableStart="@drawable/ic_tbh"
+                android:drawablePadding="10dp"
+                android:hint="@string/amount"
+                android:inputType="numberDecimal"
+                android:paddingHorizontal="10dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:text="@={viewModel.expense.amount}"
+                android:layout_marginHorizontal="20dp"
+                android:textCursorDrawable="@drawable/edit_text_cursor"
+                android:gravity="center"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/etDescriptionContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:expandedHintEnabled="false"
+            app:hintEnabled="false"
+            app:layout_constraintBottom_toTopOf="@id/atvCategoryContainer"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/etAmountContainer">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDescription"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/violet_border"
+                android:drawableStart="@drawable/ic_note"
+                android:drawablePadding="10dp"
+                android:hint="@string/description"
+                android:paddingHorizontal="10dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:text="@={viewModel.expense.title}"
+                android:textCursorDrawable="@drawable/edit_text_cursor" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/atvCategoryContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:expandedHintEnabled="false"
+            app:hintEnabled="false"
+            app:layout_constraintBottom_toTopOf="@id/tvDateContainer"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/etDescriptionContainer">
+
+            <AutoCompleteTextView
+                android:id="@+id/atvCategory"
+                style="@style/Widget.MaterialComponents.AutoCompleteTextView.FilledBox"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/violet_border"
+                android:completionThreshold="0"
+                android:drawableStart="@drawable/ic_list2"
+                android:drawablePadding="10dp"
+                android:gravity="center_vertical"
+                android:hint="@string/category"
+                android:paddingHorizontal="10dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:text="@={viewModel.expense.category.title}"
+                android:textCursorDrawable="@drawable/edit_text_cursor" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tvDateContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:expandedHintEnabled="false"
+            app:hintEnabled="false"
+
+            app:layout_constraintBottom_toTopOf="@id/btAddExpense"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/atvCategoryContainer">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDate"
+                style="@style/Widget.MaterialComponents.AutoCompleteTextView.FilledBox"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/violet_border"
+                android:clickable="true"
+                android:drawableStart="@drawable/ic_date"
+                android:drawablePadding="10dp"
+                android:editable="false"
+                android:focusable="false"
+                android:hint="@string/date"
+                android:paddingHorizontal="10dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:text="@{viewModel.expense.date}"
+                android:textCursorDrawable="@drawable/edit_text_cursor" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <ProgressBar
+            android:id="@+id/expensesLoader"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="20dp"
+            android:elevation="50dp"
+            android:indeterminateTint="@color/white"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btAddExpense"
+            app:layout_constraintLeft_toLeftOf="@id/btAddExpense"
+            app:layout_constraintTop_toTopOf="@id/btAddExpense" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btAddExpense"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/gradient_main"
+            android:onClick="@{() -> viewModel.updateExpense()}"
+            android:layout_marginHorizontal="20dp"
+            android:text="@string/update"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvDateContainer" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>
