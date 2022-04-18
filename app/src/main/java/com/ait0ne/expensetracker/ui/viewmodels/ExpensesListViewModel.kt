@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.models.Category
+import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.models.Expense
 import com.ait0ne.expensetracker.models.ExpenseDTO
 import com.ait0ne.expensetracker.models.dto.DayExpensesRequest
@@ -20,7 +21,7 @@ import kotlin.collections.ArrayList
 
 val months = listOf("январь","февраль","март", "апрель","май","июнь","июль","август","сентябрь", "октябрь","ноябрь","декабрь",)
 
-class ExpensesListViewModel(var expensesRepository: ExpensesRepository, var categoriesRepository: CategoriesRepository): ViewModel() {
+class ExpensesListViewModel(var expensesRepository: ExpensesRepository, var categoriesRepository: CategoriesRepository, private val currencyInit: Currency): ViewModel() {
 
 
     var expenses: MutableLiveData<Resource<MonthExpensesDTO>> = MutableLiveData()
@@ -31,8 +32,11 @@ class ExpensesListViewModel(var expensesRepository: ExpensesRepository, var cate
 
     var monthString: MutableLiveData<String> = MutableLiveData("Траты за " + months[selectedMonth.value?.month ?: 0])
 
+    val currency: MutableLiveData<Currency> = MutableLiveData(currencyInit)
 
     init {
+
+
         getCategoriesList()
         getTotalExpenses(selectedMonth.value!!, null);
 
@@ -45,7 +49,7 @@ class ExpensesListViewModel(var expensesRepository: ExpensesRepository, var cate
         }
 
 
-        val response = expensesRepository.monthExpenses(date, category)
+        val response = expensesRepository.monthExpenses(date, currency.value!!, category)
 
 
         val result = handleExpensesResponse(response)

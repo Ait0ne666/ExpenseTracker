@@ -31,6 +31,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
+import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.ui.bottomsheetpicker.BottomSheetPicker
 import com.ait0ne.expensetracker.ui.bottomsheetpicker.SelectOption
 import com.ait0ne.expensetracker.utils.DateUtils
@@ -76,7 +77,7 @@ class ListFragment: Fragment(R.layout.fragment_list) {
                     hideProgressBar()
                     response.data?.let { response ->
                         expensesAdapter.differ.submitList(response.expenses.toList())
-                        tvMonthTotal.text = response.month_total.toInt().toString() + "฿"
+                        tvMonthTotal.text = response.month_total.toInt().toString() + Currency.symbol(viewmodel.currency.value!!)
                     }
 
                     rvExpensesList.layoutManager?.scrollToPosition(0)
@@ -98,14 +99,14 @@ class ListFragment: Fragment(R.layout.fragment_list) {
 
 
 
-        viewmodel.options.observe(viewLifecycleOwner, {
+        viewmodel.options.observe(viewLifecycleOwner) {
             sCategory.adapter = ArrayAdapter(requireContext(), R.layout.custom_dropdown_item, it)
-        })
+        }
 
 
-        viewmodel.selectedCategory.observe(viewLifecycleOwner, {
+        viewmodel.selectedCategory.observe(viewLifecycleOwner) {
             viewmodel.updateExpenses()
-        })
+        }
 
 
 
@@ -118,9 +119,9 @@ class ListFragment: Fragment(R.layout.fragment_list) {
         }
 
         expensesAdapter.setOnItemClickListener { expense ->
-            val dialog = ExpenseFragment(expense, {
+            val dialog = ExpenseFragment(expense) {
                 viewmodel.updateData()
-            })
+            }
             dialog.show(parentFragmentManager, "")
         }
     }

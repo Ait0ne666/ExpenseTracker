@@ -1,8 +1,9 @@
 package com.ait0ne.expensetracker.models.dto
 
+import com.ait0ne.expensetracker.models.Currency
 import java.util.*
 
-data class MonthExpensesRequest(val date: Date, val category_id: String?)
+data class MonthExpensesRequest(val date: Date, val currency: Currency, val category_id: String?)
 
 
 

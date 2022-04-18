@@ -2,13 +2,49 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ait0ne.expensetracker">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission
+        android:name="android.permission.READ_SYNC_SETTINGS"/>
+    <uses-permission
+        android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+    <uses-permission
+        android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ExpenseTracker">
+        android:theme="@style/Theme.App.Starting">
+<!--        <service-->
+<!--            android:name="com.ait0ne.expensetracker.syncadapter.SyncService"-->
+<!--            android:exported="true"-->
+<!--            android:process=":sync"-->
+<!--            android:icon="@drawable/ic_launcher_foreground"-->
+<!--            >-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.content.SyncAdapter"/>-->
+<!--            </intent-filter>-->
+<!--            <meta-data android:name="android.content.SyncAdapter"-->
+<!--                android:resource="@xml/syncadapter" />-->
+<!--        </service>-->
+        <provider
+            android:name="com.ait0ne.expensetracker.providers.AppContentProvider"
+            android:authorities="com.ait0ne.expensetracker.provider"
+            android:enabled="true"
+            android:exported="true"
+            android:syncable="true"
+            ></provider>
+<!--        <service-->
+<!--            android:name="com.ait0ne.expensetracker.syncadapter.AuthenticatorService"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.accounts.AccountAuthenticator"/>-->
+<!--            </intent-filter>-->
+<!--            <meta-data-->
+<!--                android:name="android.accounts.AccountAuthenticator"-->
+<!--                android:resource="@xml/authenticator" />-->
+<!--        </service>-->
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

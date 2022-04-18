@@ -5,16 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.models.Category
+import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.models.ExpenseDTO
 import com.ait0ne.expensetracker.models.dto.CreateExpenseRequest
 import com.ait0ne.expensetracker.repositories.CategoriesRepository
 import com.ait0ne.expensetracker.repositories.ExpensesRepository
+import com.ait0ne.expensetracker.repositories.LocalRepository
 import com.ait0ne.expensetracker.utils.DateUtils
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.util.*
 
-class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categoriesRepository: CategoriesRepository):ViewModel() {
+class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categoriesRepository: CategoriesRepository, localRepository: LocalRepository):ViewModel() {
 
     var expense: MutableLiveData<ExpenseDTO> = MutableLiveData()
     val options: MutableLiveData<List<String>> = MutableLiveData(listOf())
@@ -24,7 +26,7 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
     var errorCallback: ((error: Int) -> Unit)? = null
     var successCallback: ((success: Int) -> Unit)? = null
     var buttonCallback: (() -> Unit)? = null
-
+    var currency = MutableLiveData(localRepository.getCurrency())
 
     init {
         getCategoriesList()
@@ -137,6 +139,7 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
                     amount = state.amount,
                     date = state.date,
                     title = state.title,
+                    currency = currency.value!!,
                     id = state.id
                 )
             )

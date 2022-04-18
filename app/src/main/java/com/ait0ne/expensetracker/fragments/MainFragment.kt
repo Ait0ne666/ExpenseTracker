@@ -46,6 +46,8 @@ import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Context
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
+import com.ait0ne.expensetracker.models.Currency
 import java.util.*
 
 
@@ -136,6 +138,11 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
         }
 
 
+        categoryPicker?.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, i, l ->
+            hideKeyboardFrom(requireContext(), requireView())
+        }
+
+
         categoryPicker?.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
 
@@ -190,6 +197,19 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
 
         viewmodel.onButtonClick {
             hideKeyboardFrom(requireContext(), requireView())
+        }
+
+
+        tvCurrency.setOnClickListener {
+            showCurrencyPicker()
+        }
+
+
+        etAmount.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawableForCurrency(viewmodel.currency.value!!), null, null, null)
+
+
+        viewmodel.currency.observe(viewLifecycleOwner) {
+            etAmount.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawableForCurrency(it), null, null, null)
         }
     }
 
@@ -247,5 +267,42 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
 
         datepicker.show()
 
+    }
+
+
+
+    private fun showCurrencyPicker() {
+        val options:MutableList<SelectOption<Currency>> = mutableListOf()
+
+        options.add(SelectOption(Currency.RUB, Currency.RUB.text.uppercase()))
+        options.add(SelectOption(Currency.USD, Currency.USD.text.uppercase()))
+        options.add(SelectOption(Currency.EUR, Currency.EUR.text.uppercase()))
+        options.add(SelectOption(Currency.THB, Currency.THB.text.uppercase()))
+
+        val picker = BottomSheetPicker<Currency>(options) {
+            viewmodel.changeCurrency(it)
+        }
+
+
+        picker.show(parentFragmentManager, "")
+
+    }
+
+
+    private fun getDrawableForCurrency(currency: Currency): Drawable? {
+        when(currency) {
+            Currency.THB -> {
+                return requireContext().getDrawable(R.drawable.ic_tbh)
+            }
+            Currency.EUR -> {
+                return requireContext().getDrawable(R.drawable.ic_euro)
+            }
+            Currency.RUB -> {
+                return requireContext().getDrawable(R.drawable.ic_ruble)
+            }
+            Currency.USD -> {
+                return requireContext().getDrawable(R.drawable.ic_dollar)
+            }
+        }
     }
 }

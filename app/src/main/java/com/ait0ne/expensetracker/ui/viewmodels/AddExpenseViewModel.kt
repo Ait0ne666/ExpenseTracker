@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.models.Category
+import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.models.Expense
 import com.ait0ne.expensetracker.models.ExpenseDTO
 import com.ait0ne.expensetracker.models.dto.CreateExpenseRequest
@@ -12,6 +13,7 @@ import com.ait0ne.expensetracker.models.dto.DayExpensesRequest
 import com.ait0ne.expensetracker.models.dto.DayResponseDto
 import com.ait0ne.expensetracker.repositories.CategoriesRepository
 import com.ait0ne.expensetracker.repositories.ExpensesRepository
+import com.ait0ne.expensetracker.repositories.LocalRepository
 import com.ait0ne.expensetracker.ui.bottomsheetpicker.SelectOption
 import com.ait0ne.expensetracker.utils.DateUtils
 import kotlinx.coroutines.launch
@@ -44,7 +46,8 @@ enum class FormFields {
 
 class AddExpenseViewModel(
     private val expensesRepository: ExpensesRepository,
-    private val categoriesRespository: CategoriesRepository
+    private val categoriesRespository: CategoriesRepository,
+    private val localRepository: LocalRepository
 ) : ViewModel() {
 
 
@@ -58,9 +61,16 @@ class AddExpenseViewModel(
     var buttonCallback: (() -> Unit)? = null
     var day_total: MutableLiveData<Int> = MutableLiveData(0)
     var month_total: MutableLiveData<Int> = MutableLiveData(0)
-
+    var currency: MutableLiveData<Currency> = MutableLiveData(localRepository.getCurrency())
+    val symbol: MutableLiveData<String>
+        get() {
+            return MutableLiveData(Currency.symbol(currency.value!!))
+        }
 
     init {
+
+
+
         getCategoriesList()
         addExpenseFormState.postValue(
             AddExpenseFormState(
@@ -71,6 +81,8 @@ class AddExpenseViewModel(
 
             )
         )
+
+
     }
 
     fun addExpense(
@@ -90,6 +102,9 @@ class AddExpenseViewModel(
                 loading.postValue(!loading.value!!)
 
                 createExpense(currentState.value!!)
+
+
+
             }
 
         }
@@ -113,10 +128,11 @@ class AddExpenseViewModel(
     }
 
 
-    private fun getTotalExpenses() = viewModelScope.launch {
+    private fun getTotalExpenses(cur: Currency?) = viewModelScope.launch {
 
 
-        val response = expensesRepository.dayExpenses(DayExpensesRequest(Date()))
+        val response =
+            expensesRepository.dayExpenses(DayExpensesRequest(Date(), cur ?: currency.value!!))
 
 
         handleDayExpensesResponse(response)
@@ -203,6 +219,7 @@ class AddExpenseViewModel(
                     amount = state.amount,
                     date = state.date,
                     title = state.description,
+                    currency = currency.value!!,
                     id = null
                 )
             )
@@ -218,8 +235,8 @@ class AddExpenseViewModel(
                 resetFormState()
 
                 if (DateUtils.isSameDay(expense.date, Date())) {
-                    day_total.postValue(expense.amount.toInt() + (day_total.value?:0))
-                    month_total.postValue(expense.amount.toInt() + (month_total.value?:0))
+                    day_total.postValue(expense.amount.toInt() + (day_total.value ?: 0))
+                    month_total.postValue(expense.amount.toInt() + (month_total.value ?: 0))
                 }
 
 
@@ -231,6 +248,9 @@ class AddExpenseViewModel(
             loading.postValue(false)
         }
     }
+
+
+
 
 
     private fun handleCreateExpenseResponse(response: Response<ExpenseDTO>): ExpenseDTO? {
@@ -280,9 +300,60 @@ class AddExpenseViewModel(
         buttonCallback = callback
     }
 
-
+    fun changeCurrency(cur: Currency) {
+        localRepository.putCurrency(cur)
+        getTotalExpenses(cur)
+    }
 
     fun updateTotal() {
-        getTotalExpenses()
+        getTotalExpenses(null)
     }
+
+
+
+
+    //LOCAL
+
+
+    fun createExpenseLocal(state: AddExpenseFormState) {
+        viewModelScope.launch {
+            val expense = expensesRepository.createExpenseLocal(
+                CreateExpenseRequest(
+                    category_name = state.category!!,
+                    amount = state.amount,
+                    date = state.date,
+                    title = state.description,
+                    currency = currency.value!!,
+                    id = null
+                )
+            )
+
+
+            if (expense == null) {
+                errorCallback?.let {
+                    it(R.string.addExpenseError)
+                }
+            } else {
+
+                resetFormState()
+
+                if (DateUtils.isSameDay(expense.date, Date())) {
+                    day_total.postValue(expense.amount.toInt() + (day_total.value ?: 0))
+                    month_total.postValue(expense.amount.toInt() + (month_total.value ?: 0))
+                }
+
+
+                successCallback?.let {
+                    it(R.string.addExpenseSuccess)
+                }
+            }
+
+            loading.postValue(false)
+
+        }
+    }
+
+
+
+
 }

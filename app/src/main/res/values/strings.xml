@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ExpenseTracker</string>
+    <string name="app_name">Pland</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="add_expense">Add Expense</string>
@@ -17,4 +17,8 @@
     <string name="month">Траты за месяц</string>
     <string name="all">Все</string>
     <string name="update">Изменить</string>
+    <string name="password">Пароль</string>
+    <string name="login">Логин</string>
+    <string name="enter">Войти</string>
+    <string name="loginError">Неверный логин или пароль</string>
 </resources>

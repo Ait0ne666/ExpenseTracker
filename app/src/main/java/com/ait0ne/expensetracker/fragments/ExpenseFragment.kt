@@ -22,12 +22,14 @@ import android.graphics.Shader.TileMode
 import android.graphics.LinearGradient
 
 import android.graphics.Shader
+import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ProgressBar
+import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.ui.viewmodels.FormFields
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -198,6 +200,15 @@ class ExpenseFragment(val expense: ExpenseDTO, val successCallback: () -> Unit):
         viewmodel.onButtonClick {
             hideKeyboardFrom(requireContext(), requireView())
         }
+
+
+
+        etAmount.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawableForCurrency(viewmodel.currency.value!!), null, null, null)
+
+
+        viewmodel.currency.observe(viewLifecycleOwner) {
+            etAmount.setCompoundDrawablesRelativeWithIntrinsicBounds(getDrawableForCurrency(it), null, null, null)
+        }
     }
 
 
@@ -255,5 +266,23 @@ class ExpenseFragment(val expense: ExpenseDTO, val successCallback: () -> Unit):
 
         datepicker.show()
 
+    }
+
+
+    private fun getDrawableForCurrency(currency: Currency): Drawable? {
+        when(currency) {
+            Currency.THB -> {
+                return requireContext().getDrawable(R.drawable.ic_tbh)
+            }
+            Currency.EUR -> {
+                return requireContext().getDrawable(R.drawable.ic_euro)
+            }
+            Currency.RUB -> {
+                return requireContext().getDrawable(R.drawable.ic_ruble)
+            }
+            Currency.USD -> {
+                return requireContext().getDrawable(R.drawable.ic_dollar)
+            }
+        }
     }
 }

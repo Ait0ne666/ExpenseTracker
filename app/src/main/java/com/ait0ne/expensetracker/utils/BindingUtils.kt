@@ -3,6 +3,7 @@ package com.ait0ne.expensetracker.utils
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.databinding.InverseBindingAdapter
+import com.ait0ne.expensetracker.models.Currency
 import com.google.android.material.textfield.TextInputEditText
 import java.text.SimpleDateFormat
 import java.util.*
@@ -14,7 +15,7 @@ object BindingUtils {
     public fun setText(view: TextInputEditText, value: Float?) {
         if (value == null) return;
         if (value.isNaN() || value == 0f) view.setText("");
-        else view.setText(value.toString());
+        else view.setText(value.toInt().toString());
     }
 
     @InverseBindingAdapter(attribute = "android:text")
@@ -38,6 +39,14 @@ object BindingUtils {
     public fun getText(view: TextView): Float {
         val num = view.getText().toString();
         return num.toFloatOrNull() ?: return 0f
+    }
+
+
+    @BindingAdapter("android:text")
+    @JvmStatic
+    public fun setText(view: TextView, value: Currency?) {
+        if (value == null) return;
+        view.text = value.text.uppercase()
     }
 
 

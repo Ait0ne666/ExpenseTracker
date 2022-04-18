@@ -6,6 +6,6 @@ class Constants {
 
         const val BASE_URL = "https://calm-sierra-39049.herokuapp.com/"
 
-        const val API_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMyIsImV4cCI6MTY4MDc2ODQyNCwiaWF0IjoxNjQ5MjMyNDI0fQ.L3FhEeK9gry-8sabQasc7KPzQQZC-ZND6DWs3Stq_dU"
+        const val API_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImJlOWUxOWQxLTcxNTAtNGE2ZC04NWYwLTFjZWUxYzNhYzdiYyIsImV4cCI6MTY4MTU1NjQwMSwiaWF0IjoxNjUwMDIwNDAxfQ.BtSxL-uJMJWYJtosHGqbSukTufgcbT_CEV8Ox5-QKjw"
     }
 }

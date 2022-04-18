@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.ait0ne.expensetracker.R
+import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.models.ExpenseDTO
 import com.ait0ne.expensetracker.utils.DateUtils
 import com.bumptech.glide.Glide
@@ -26,7 +27,9 @@ class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(
         }
 
         override fun areContentsTheSame(oldItem: ExpenseDTO, newItem: ExpenseDTO): Boolean {
-            return false
+
+            return oldItem.amount == newItem.amount && oldItem.category == newItem.category && oldItem.category_id == newItem.category_id && oldItem.date == newItem.date && newItem.currency == oldItem.currency && newItem.title == oldItem.title
+
         }
     }
 
@@ -50,7 +53,7 @@ class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(
             val pattern = "HH:mm"
             val format = SimpleDateFormat(pattern, Locale("ru", "RU"))
 
-            tvAmount.text = expense.amount.toInt().toString() + "฿"
+            tvAmount.text = expense.amount.toInt().toString() + Currency.symbol(expense.currency)
             tvDate.text = format.format(expense.date)
 
             tvExpenseCategory.text = expense.category.title
