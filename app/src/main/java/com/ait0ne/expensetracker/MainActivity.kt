@@ -20,6 +20,7 @@ import com.ait0ne.expensetracker.api.RetrofitInstance
 import com.ait0ne.expensetracker.databinding.ActivityMainBinding
 import com.ait0ne.expensetracker.db.ExpenseDB
 import com.ait0ne.expensetracker.fragments.AuthFragmentDirections
+import com.ait0ne.expensetracker.providers.AppContentProvider
 import com.ait0ne.expensetracker.repositories.AuthRepository
 import com.ait0ne.expensetracker.repositories.CategoriesRepository
 import com.ait0ne.expensetracker.repositories.ExpensesRepository
@@ -47,13 +48,14 @@ class MainActivity : AppCompatActivity() {
     lateinit var chartsViewModel: ChartsViewModel
     lateinit var sharedViewModel: SharedViewModel
     lateinit var authViewModel: AuthViewModel
-
+    lateinit var syncViewModel: SyncViewModel
+    var syncInProgress = false;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
 
-//        setupSyncService()
+        setupSyncService()
 
 
         val prefs = getSharedPreferences(
@@ -62,21 +64,22 @@ class MainActivity : AppCompatActivity() {
 
 
         val isLoggedIn = prefs.getString("jwt", "") != ""
-
+        val isSynced = prefs.getString("lastSync", null)
 
         val retrofit = RetrofitInstance(prefs)
 
         var resolver = contentResolver
 
 
-
-
+        val db = ExpenseDB(this)
 
         //viewmodels setup
-        val expensesRepository = ExpensesRepository(ExpenseDB(this), retrofit, resolver)
-        val categoriesRepository = CategoriesRepository(retrofit)
+        val categoriesRepository = CategoriesRepository(db)
         val authRepository = AuthRepository(retrofit)
         val localRepository = LocalRepository(prefs)
+        val expensesRepository = ExpensesRepository(
+            db, retrofit, localRepository, resolver
+        ) { sync() }
         val viewModelProviderFactory =
             AddExpenseVieModelFactory(expensesRepository, categoriesRepository, localRepository)
         addExpenseViewModel =
@@ -86,7 +89,8 @@ class MainActivity : AppCompatActivity() {
         val expensesViewModelProviderFactory = ExpensesListViewModelFactory(
             expensesRepository,
             categoriesRepository,
-            localRepository.getCurrency()
+            localRepository.getCurrency(),
+            localRepository
         )
         expensesListViewModel = ViewModelProvider(
             this,
@@ -106,7 +110,7 @@ class MainActivity : AppCompatActivity() {
             ViewModelProvider(this, chartsViewModelProviderFactory).get(ChartsViewModel::class.java)
 
 
-        val authViewModelProviderFactory = AuthVieModelFactory(authRepository)
+        val authViewModelProviderFactory = AuthVieModelFactory(authRepository, localRepository)
         authViewModel =
             ViewModelProvider(this, authViewModelProviderFactory).get(AuthViewModel::class.java)
 
@@ -114,6 +118,10 @@ class MainActivity : AppCompatActivity() {
         sharedViewModel =
             ViewModelProvider(this, sharedViewModelProviderFactory).get(SharedViewModel::class.java)
 
+
+        val syncViewModelProviderFactory = SyncViewModelFactory(expensesRepository, localRepository)
+        syncViewModel =
+            ViewModelProvider(this, syncViewModelProviderFactory).get(SyncViewModel::class.java)
 
         val binding: ActivityMainBinding =
             DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -135,7 +143,12 @@ class MainActivity : AppCompatActivity() {
         bottomNavigationView.setupWithNavController(navController)
 
         if (isLoggedIn) {
-            navController.navigate(AuthFragmentDirections.actionAuthFragmentToMainFragment())
+            if (isSynced == null) {
+                navController.navigate(AuthFragmentDirections.actionAuthFragmentToSyncFragment2())
+            } else {
+                navController.navigate(AuthFragmentDirections.actionAuthFragmentToMainFragment())
+
+            }
 
         }
 
@@ -144,6 +157,10 @@ class MainActivity : AppCompatActivity() {
                 R.id.authFragment -> {
                     bottomNavigationView.visibility = View.GONE
                 }
+                R.id.syncFragment2 -> {
+                    bottomNavigationView.visibility = View.GONE
+                }
+
                 else -> {
                     bottomNavigationView.visibility = View.VISIBLE
                 }
@@ -152,6 +169,14 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = getColor(R.color.background)
     }
 
+
+    private fun sync() {
+        ContentResolver.requestSync(
+            mAccount,
+            AUTHORITY,
+            Bundle.EMPTY
+        );
+    }
 
     private fun setupSyncService() {
 
@@ -162,12 +187,7 @@ class MainActivity : AppCompatActivity() {
         applicationContext.startService(intent)
 
 
-//            ContentResolver.requestSync(
-//                mAccount,
-//                AUTHORITY,
-//                Bundle.EMPTY
-//            )
-
+        sync()
 
         ContentResolver.addPeriodicSync(
             mAccount,
@@ -176,7 +196,30 @@ class MainActivity : AppCompatActivity() {
             3600L
         )
 
+        ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE or ContentResolver.SYNC_OBSERVER_TYPE_PENDING) {
+            Log.i("SYNC", ContentResolver.getCurrentSyncs().size.toString())
 
+            when (it) {
+                ContentResolver.SYNC_OBSERVER_TYPE_PENDING -> {
+                    Log.i("SYNC", "PENDING")
+                    if (ContentResolver.isSyncPending(mAccount, AUTHORITY)) {
+                        syncInProgress = true
+                    }
+                }
+
+                ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE -> {
+                    Log.i("SYNC", "ACTIVE")
+                    if (!ContentResolver.isSyncActive(mAccount, AUTHORITY)) {
+                        syncInProgress = false
+                        addExpenseViewModel.update()
+                        expensesListViewModel.updateExpenses()
+                        chartsViewModel.refetch()
+                    }
+                }
+            }
+
+
+        }
     }
 
 

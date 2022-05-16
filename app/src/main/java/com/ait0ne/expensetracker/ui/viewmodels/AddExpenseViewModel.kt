@@ -1,5 +1,6 @@
 package com.ait0ne.expensetracker.ui.viewmodels
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,15 +16,16 @@ import com.ait0ne.expensetracker.repositories.CategoriesRepository
 import com.ait0ne.expensetracker.repositories.ExpensesRepository
 import com.ait0ne.expensetracker.repositories.LocalRepository
 import com.ait0ne.expensetracker.ui.bottomsheetpicker.SelectOption
+import com.ait0ne.expensetracker.utils.CurrencyUtils
 import com.ait0ne.expensetracker.utils.DateUtils
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.util.*
 
 
-class InitialFormState(val amount: Float, val description: String, val category: String?) {
 
-}
 
 
 data class AddExpenseFormState(
@@ -60,6 +62,7 @@ class AddExpenseViewModel(
     var successCallback: ((success: Int) -> Unit)? = null
     var buttonCallback: (() -> Unit)? = null
     var day_total: MutableLiveData<Int> = MutableLiveData(0)
+
     var month_total: MutableLiveData<Int> = MutableLiveData(0)
     var currency: MutableLiveData<Currency> = MutableLiveData(localRepository.getCurrency())
     val symbol: MutableLiveData<String>
@@ -67,8 +70,14 @@ class AddExpenseViewModel(
             return MutableLiveData(Currency.symbol(currency.value!!))
         }
 
-    init {
+    private var job = Job()
+        get() {
+            if (field.isCancelled) field = Job()
+            return field
+        }
 
+
+    init {
 
 
         getCategoriesList()
@@ -81,6 +90,14 @@ class AddExpenseViewModel(
 
             )
         )
+
+
+        if (job.isActive) {
+            job.cancel()
+        }
+
+
+        getTotalExpenses(currency.value)
 
 
     }
@@ -104,7 +121,6 @@ class AddExpenseViewModel(
                 createExpense(currentState.value!!)
 
 
-
             }
 
         }
@@ -115,62 +131,38 @@ class AddExpenseViewModel(
     private fun getCategoriesList() = viewModelScope.launch {
 
 
-        val response = categoriesRespository.getCategories()
+        val categories = categoriesRespository.getCategories()
 
-        val categories = handleCategoriesResponse(response)
 
-        categories?.let {
+        categories.collect {
             val new_options = it.map { c ->
-                c.title
+                c.title.capitalize()
             }
-            options.postValue(new_options)
+            options.postValue(new_options);
+        };
+    }
+
+
+    private fun getTotalExpenses(cur: Currency?) = viewModelScope.launch(job) {
+        val currency = cur ?: Currency.RUB
+        val rates = localRepository.getRates()
+        val expenses = expensesRepository.getExpensesForDay(Date())
+
+        expenses.collect { expensesList ->
+
+            var total = 0F
+
+            expensesList.forEach {
+                total += CurrencyUtils.convertCurrency(it.expense.amount, it.expense.currency, currency, rates)
+            }
+
+
+            day_total.postValue(total.toInt())
         }
     }
 
 
-    private fun getTotalExpenses(cur: Currency?) = viewModelScope.launch {
 
-
-        val response =
-            expensesRepository.dayExpenses(DayExpensesRequest(Date(), cur ?: currency.value!!))
-
-
-        handleDayExpensesResponse(response)
-
-    }
-
-
-    private fun handleCategoriesResponse(response: Response<MutableList<Category>>): MutableList<Category>? {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                return result
-            }
-
-
-        }
-
-
-        return null
-
-    }
-
-
-    private fun handleDayExpensesResponse(response: Response<DayResponseDto>) {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                day_total.postValue(result.day_total.toInt())
-                month_total.postValue(result.month_total.toInt())
-            }
-
-
-        }
-
-
-    }
 
 
     private fun validateFormState(state: AddExpenseFormState?): Boolean {
@@ -213,36 +205,27 @@ class AddExpenseViewModel(
         viewModelScope.launch {
 
 
-            val response = expensesRepository.createExpense(
-                CreateExpenseRequest(
-                    category_name = state.category!!,
-                    amount = state.amount,
-                    date = state.date,
-                    title = state.description,
-                    currency = currency.value!!,
-                    id = null
-                )
+            val expenseToCreate = CreateExpenseRequest(
+                category_name = state.category!!,
+                amount = state.amount,
+                date = state.date,
+                title = state.description,
+                currency = currency.value!!,
+                id = null,
+                created_at = null,
+                cloud_id = null
             )
 
-            val expense = handleCreateExpenseResponse(response)
+             expensesRepository.createExpenseFromDAO(
+                expenseToCreate
+            )
 
-            if (expense == null) {
-                errorCallback?.let {
-                    it(R.string.addExpenseError)
-                }
-            } else {
-
-                resetFormState()
-
-                if (DateUtils.isSameDay(expense.date, Date())) {
-                    day_total.postValue(expense.amount.toInt() + (day_total.value ?: 0))
-                    month_total.postValue(expense.amount.toInt() + (month_total.value ?: 0))
-                }
+            resetFormState()
 
 
-                successCallback?.let {
-                    it(R.string.addExpenseSuccess)
-                }
+
+            successCallback?.let {
+                it(R.string.addExpenseSuccess)
             }
 
             loading.postValue(false)
@@ -250,24 +233,6 @@ class AddExpenseViewModel(
     }
 
 
-
-
-
-    private fun handleCreateExpenseResponse(response: Response<ExpenseDTO>): ExpenseDTO? {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                return result
-            }
-
-
-        }
-
-
-        return null
-
-    }
 
 
     private fun resetFormState() {
@@ -305,55 +270,15 @@ class AddExpenseViewModel(
         getTotalExpenses(cur)
     }
 
-    fun updateTotal() {
-        getTotalExpenses(null)
-    }
 
-
-
-
-    //LOCAL
-
-
-    fun createExpenseLocal(state: AddExpenseFormState) {
-        viewModelScope.launch {
-            val expense = expensesRepository.createExpenseLocal(
-                CreateExpenseRequest(
-                    category_name = state.category!!,
-                    amount = state.amount,
-                    date = state.date,
-                    title = state.description,
-                    currency = currency.value!!,
-                    id = null
-                )
-            )
-
-
-            if (expense == null) {
-                errorCallback?.let {
-                    it(R.string.addExpenseError)
-                }
-            } else {
-
-                resetFormState()
-
-                if (DateUtils.isSameDay(expense.date, Date())) {
-                    day_total.postValue(expense.amount.toInt() + (day_total.value ?: 0))
-                    month_total.postValue(expense.amount.toInt() + (month_total.value ?: 0))
-                }
-
-
-                successCallback?.let {
-                    it(R.string.addExpenseSuccess)
-                }
-            }
-
-            loading.postValue(false)
-
+    fun update() {
+        if (job.isActive) {
+            job.cancel()
         }
+
+
+        getTotalExpenses(currency.value)
     }
-
-
 
 
 }

@@ -79,7 +79,6 @@ class graphFragment : Fragment(R.layout.fragment_graph) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewmodel.update()
 
         viewmodel.currentMonth.observe(viewLifecycleOwner) {
             tvCurrentMonth.text = "Статистика за " + DateUtils.months[it.month ?: 0]
@@ -174,6 +173,10 @@ class graphFragment : Fragment(R.layout.fragment_graph) {
         tvCurrentMonth.setOnClickListener {
             showDatePicker()
         }
+
+
+
+        viewmodel.refetch()
     }
 
 

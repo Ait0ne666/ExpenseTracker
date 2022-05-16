@@ -4,9 +4,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ait0ne.expensetracker.R
-import com.ait0ne.expensetracker.models.Category
+import com.ait0ne.expensetracker.models.*
 import com.ait0ne.expensetracker.models.Currency
-import com.ait0ne.expensetracker.models.ExpenseDTO
 import com.ait0ne.expensetracker.models.dto.CreateExpenseRequest
 import com.ait0ne.expensetracker.repositories.CategoriesRepository
 import com.ait0ne.expensetracker.repositories.ExpensesRepository
@@ -15,10 +14,15 @@ import com.ait0ne.expensetracker.utils.DateUtils
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.util.*
+import kotlinx.coroutines.flow.collect
 
-class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categoriesRepository: CategoriesRepository, localRepository: LocalRepository):ViewModel() {
+class ExpenseViewModel(
+    val expensesRepository: ExpensesRepository,
+    val categoriesRepository: CategoriesRepository,
+    localRepository: LocalRepository
+) : ViewModel() {
 
-    var expense: MutableLiveData<ExpenseDTO> = MutableLiveData()
+    var expense: MutableLiveData<ExpenseWithCategory> = MutableLiveData()
     val options: MutableLiveData<List<String>> = MutableLiveData(listOf())
     val loading: MutableLiveData<Boolean> = MutableLiveData(false)
     val amountError: MutableLiveData<Int?> = MutableLiveData()
@@ -33,8 +37,7 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
     }
 
 
-
-    fun setInitialExpense(initialExpense: ExpenseDTO) {
+    fun setInitialExpense(initialExpense: ExpenseWithCategory) {
         expense.postValue(initialExpense)
     }
 
@@ -60,39 +63,23 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
     private fun getCategoriesList() = viewModelScope.launch {
 
 
-        val response = categoriesRepository.getCategories()
+        val categories = categoriesRepository.getCategories()
 
-        val categories = handleCategoriesResponse(response)
 
-        categories?.let {
-            val new_options = it.map { c ->
-                c.title
+
+        categories.collect {
+            val newOptions = it.map { c ->
+                c.title.capitalize()
             }
-            options.postValue(new_options)
+            options.postValue(newOptions)
         }
-    }
-
-    private fun handleCategoriesResponse(response: Response<MutableList<Category>>): MutableList<Category>? {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                return result
-            }
-
-
-        }
-
-
-        return null
-
     }
 
 
     private fun validate(): Boolean {
         var valid = true
         val state = expense.value
-        if (state?.amount == 0f) {
+        if (state?.expense?.amount == 0f) {
             amountError.postValue(R.string.required)
             valid = false
         } else {
@@ -109,7 +96,6 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
 
         return valid
     }
-
 
 
     fun clearFieldError(field: FormFields) {
@@ -133,28 +119,27 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
 
             val state = expense.value!!
 
-            val response = expensesRepository.createExpense(
-                CreateExpenseRequest(
-                    category_name = state.category.title,
-                    amount = state.amount,
-                    date = state.date,
-                    title = state.title,
-                    currency = currency.value!!,
-                    id = state.id
-                )
+            val expenseToCreate = CreateExpenseRequest(
+                category_name = state.category.title,
+                amount = state.expense.amount,
+                date = state.expense.date,
+                title = state.expense.title,
+                currency = currency.value!!,
+                id = state.expense.id,
+                cloud_id = state.expense.cloud_id,
+                created_at = state.expense.created_at
             )
 
-            val expense = handleCreateExpenseResponse(response)
+            expensesRepository.createExpenseFromDAO(
+                expenseToCreate
+            )
 
-            if (expense == null) {
-                errorCallback?.let {
-                    it(R.string.addExpenseError)
-                }
-            } else {
 
-                successCallback?.let {
-                    it(R.string.addExpenseSuccess)
-                }
+
+
+
+            successCallback?.let {
+                it(R.string.addExpenseSuccess)
             }
 
             loading.postValue(false)
@@ -162,27 +147,8 @@ class ExpenseViewModel(val expensesRepository: ExpensesRepository, val categorie
     }
 
 
-    private fun handleCreateExpenseResponse(response: Response<ExpenseDTO>): ExpenseDTO? {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                return result
-            }
-
-
-        }
-
-
-        return null
-
-    }
-
-
-
-
     fun changeDate(date: Date) {
-        expense.postValue(expense.value!!.copy(date = date))
+        expense.postValue(expense.value!!.copy(expense = expense.value!!.expense.copy(date = date)))
     }
 
 

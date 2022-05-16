@@ -9,7 +9,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.DateFormat
 
 class RetrofitInstance(val sharedPreferences: SharedPreferences) {
 
@@ -30,33 +29,29 @@ class RetrofitInstance(val sharedPreferences: SharedPreferences) {
     }
 
 
-
-
-    private fun buildRetrofit():Retrofit {
+    private fun buildRetrofit(): Retrofit {
 
 
         val logging = HttpLoggingInterceptor()
         logging.setLevel(HttpLoggingInterceptor.Level.BODY)
 
 
-
-
         val client = OkHttpClient.Builder()
+            .addInterceptor(Logger())
             .addInterceptor(logging)
             .addInterceptor(AuthInterceptor(sharedPreferences))
             .build()
 
-        val gson = GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").registerTypeAdapter(Currency::class.java, CurrencyTypeAdapter()).create()
+        val gson = GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+            .registerTypeAdapter(Currency::class.java, CurrencyTypeAdapter()).create()
 
-        val retrofit = Retrofit.Builder()
+
+        return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
 
             .addConverterFactory(GsonConverterFactory.create(gson))
             .client(client)
             .build()
-
-
-        return retrofit
     }
 
 

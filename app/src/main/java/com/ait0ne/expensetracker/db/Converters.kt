@@ -23,14 +23,17 @@ class Converters {
     @TypeConverter
     fun toCurrency(value: String): Currency {
         return when(value) {
-            "THB" -> {
+            "tbh" -> {
                 Currency.THB
             }
-            "USD" -> {
+            "usd" -> {
                 Currency.USD
             }
-            "RUB" -> {
+            "rub" -> {
                 Currency.RUB
+            }
+            "eur" -> {
+                Currency.EUR
             }
             else -> {
                 Currency.RUB

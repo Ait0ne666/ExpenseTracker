@@ -109,9 +109,16 @@ class AuthFragment:Fragment(R.layout.fragment_auth) {
 
 
             prefs.edit().putString("jwt", success).apply()
+            val lastSync =  prefs.getString("lastSync", null)
+
+            if (lastSync.isNullOrEmpty()) {
+                findNavController().navigate(AuthFragmentDirections.actionAuthFragmentToSyncFragment2())
+            } else {
+                findNavController().navigate(AuthFragmentDirections.actionAuthFragmentToMainFragment())
+
+            }
 
 
-            findNavController().navigate(AuthFragmentDirections.actionAuthFragmentToMainFragment())
 
 
         }
@@ -172,13 +179,17 @@ class AuthFragment:Fragment(R.layout.fragment_auth) {
     }
 
 
-    fun hideKeyboardFrom(context: Context, view: View) {
+    fun hideKeyboardFrom(context: Context, view: View?) {
 
-        val focus = view.findFocus()
-        focus.clearFocus()
+        val focus = view?.findFocus()
+        focus?.clearFocus()
+        view?.let {
+
         val imm: InputMethodManager =
             context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(view.windowToken, 0)
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+
+        }
     }
 
 }

@@ -1,9 +1,10 @@
 package com.ait0ne.expensetracker.repositories
 
 import com.ait0ne.expensetracker.api.RetrofitInstance
+import com.ait0ne.expensetracker.db.ExpenseDB
 
-class CategoriesRepository(val RetrofitInstance:RetrofitInstance) {
+class CategoriesRepository( val db: ExpenseDB) {
 
-    suspend fun getCategories() =
-        RetrofitInstance.api.getCategories()
+    fun getCategories() =
+        db.getExpenseDao().getAllCategories()
 }

@@ -1,6 +1,5 @@
 package com.ait0ne.expensetracker.fragments
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -9,35 +8,20 @@ import com.ait0ne.expensetracker.ui.bottomsheetpicker.SelectOption
 import kotlinx.android.synthetic.main.fragment_main.*
 import android.graphics.drawable.Drawable
 
-import android.graphics.drawable.shapes.RectShape
-
-import android.graphics.drawable.PaintDrawable
-
-import android.graphics.Shader
-
-import android.graphics.LinearGradient
-
-import android.graphics.drawable.ShapeDrawable.ShaderFactory
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.ait0ne.expensetracker.MainActivity
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.ui.viewmodels.AddExpenseViewModel
-import android.content.ClipData.Item
 
-import android.content.ClipData
-import android.opengl.Visibility
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.AutoCompleteTextView
 
 import androidx.databinding.DataBindingUtil
-import androidx.databinding.ViewDataBinding
 import com.ait0ne.expensetracker.databinding.FragmentMainBinding
 import android.widget.ArrayAdapter
 import android.widget.ProgressBar
-import android.widget.Toast.LENGTH_SHORT
-import androidx.appcompat.widget.AppCompatButton
 import com.ait0ne.expensetracker.ui.viewmodels.FormFields
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -48,6 +32,7 @@ import android.content.Context
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import com.ait0ne.expensetracker.models.Currency
+
 import java.util.*
 
 
@@ -56,11 +41,15 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
     private lateinit var viewmodel: AddExpenseViewModel
 
 
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
+
         val binding: FragmentMainBinding =
             DataBindingUtil.inflate(
                 inflater,
@@ -75,13 +64,15 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
     }
 
 
+
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
 
 
         setupView()
-        viewmodel.updateTotal()
+
 
         viewmodel.options.observe(viewLifecycleOwner) { categories ->
             val categoryPicker = view.findViewById<AutoCompleteTextView>(R.id.atvCategory)
@@ -123,6 +114,8 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
                 container.error = getString(error)
             }
         }
+
+
 
     }
 
@@ -230,13 +223,16 @@ class MainFragment : Fragment(com.ait0ne.expensetracker.R.layout.fragment_main) 
     }
 
 
-    fun hideKeyboardFrom(context: Context, view: View) {
+    fun hideKeyboardFrom(context: Context, view: View?) {
 
-        val focus = view.findFocus()
-        focus.clearFocus()
+        val focus = view?.findFocus()
+        focus?.clearFocus()
         val imm: InputMethodManager =
             context.getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(view.windowToken, 0)
+        view?.let {
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+
+        }
     }
 
     fun showDatePicker() {

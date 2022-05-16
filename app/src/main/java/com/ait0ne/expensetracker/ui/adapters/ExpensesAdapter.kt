@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.models.Currency
 import com.ait0ne.expensetracker.models.ExpenseDTO
+import com.ait0ne.expensetracker.models.ExpenseWithCategory
 import com.ait0ne.expensetracker.utils.DateUtils
 import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.expense_item.view.*
@@ -17,19 +18,18 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(){
+class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>() {
 
-    inner class ExpenseViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)
+    inner class ExpenseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    private val differCallback = object : DiffUtil.ItemCallback<ExpenseDTO>() {
-        override fun areItemsTheSame(oldItem: ExpenseDTO, newItem: ExpenseDTO): Boolean {
-            return oldItem.id == newItem.id
+    private val differCallback = object : DiffUtil.ItemCallback<ExpenseWithCategory>() {
+        override fun areItemsTheSame(oldItem: ExpenseWithCategory, newItem: ExpenseWithCategory): Boolean {
+            return oldItem.expense.id == newItem.expense.id
         }
 
-        override fun areContentsTheSame(oldItem: ExpenseDTO, newItem: ExpenseDTO): Boolean {
+        override fun areContentsTheSame(oldItem: ExpenseWithCategory, newItem: ExpenseWithCategory): Boolean {
 
-            return oldItem.amount == newItem.amount && oldItem.category == newItem.category && oldItem.category_id == newItem.category_id && oldItem.date == newItem.date && newItem.currency == oldItem.currency && newItem.title == oldItem.title
-
+            return false
         }
     }
 
@@ -53,10 +53,10 @@ class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(
             val pattern = "HH:mm"
             val format = SimpleDateFormat(pattern, Locale("ru", "RU"))
 
-            tvAmount.text = expense.amount.toInt().toString() + Currency.symbol(expense.currency)
-            tvDate.text = format.format(expense.date)
+            tvAmount.text = expense.expense.amount.toInt().toString() + Currency.symbol(expense.expense.currency)
+            tvDate.text = format.format(expense.expense.date)
 
-            tvExpenseCategory.text = expense.category.title
+            tvExpenseCategory.text = expense.category.title.capitalize()
 
             var showDate = false
 
@@ -66,9 +66,9 @@ class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(
                 val params = (tvCurrentDay.layoutParams as ViewGroup.MarginLayoutParams)
                 params.topMargin = 0
             } else {
-                val previous = differ.currentList[position -1]
+                val previous = differ.currentList[position - 1]
 
-                if (!DateUtils.isSameDay(previous.date, expense.date)) {
+                if (!DateUtils.isSameDay(previous.expense.date, expense.expense.date)) {
                     showDate = true
                 }
             }
@@ -79,7 +79,8 @@ class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(
                 tvCurrentDay.visibility = View.VISIBLE
 
 
-                tvCurrentDay.text = SimpleDateFormat(pattern, Locale("ru", "RU")).format(expense.date)
+                tvCurrentDay.text =
+                    SimpleDateFormat(pattern, Locale("ru", "RU")).format(expense.expense.date)
             } else {
                 tvCurrentDay.visibility = View.GONE
             }
@@ -96,10 +97,10 @@ class ExpensesAdapter : RecyclerView.Adapter<ExpensesAdapter.ExpenseViewHolder>(
     }
 
 
-    private var onItemClickListener : ((ExpenseDTO) ->Unit)? = null
+    private var onItemClickListener: ((ExpenseWithCategory) -> Unit)? = null
 
 
-    fun setOnItemClickListener(listener: (ExpenseDTO) ->Unit) {
+    fun setOnItemClickListener(listener: (ExpenseWithCategory) -> Unit) {
         onItemClickListener = listener
     }
 

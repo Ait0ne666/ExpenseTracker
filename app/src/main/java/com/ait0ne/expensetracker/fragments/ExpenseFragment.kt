@@ -9,13 +9,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.navArgs
 import com.ait0ne.expensetracker.MainActivity
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.databinding.FragmentExpenseBinding
-import com.ait0ne.expensetracker.databinding.FragmentListBinding
-import com.ait0ne.expensetracker.models.ExpenseDTO
+
 import com.ait0ne.expensetracker.ui.viewmodels.ExpenseViewModel
 import android.graphics.Shader.TileMode
 
@@ -30,15 +27,16 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ProgressBar
 import com.ait0ne.expensetracker.models.Currency
+import com.ait0ne.expensetracker.models.ExpenseWithCategory
 import com.ait0ne.expensetracker.ui.viewmodels.FormFields
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.android.synthetic.main.fragment_main.*
+import kotlinx.android.synthetic.main.fragment_expense.*
 import java.util.*
 
 
-class ExpenseFragment(val expense: ExpenseDTO, val successCallback: () -> Unit): DialogFragment(){
+class ExpenseFragment(val expense: ExpenseWithCategory, val successCallback: () -> Unit): DialogFragment(){
 
     lateinit var viewmodel: ExpenseViewModel
 
@@ -239,7 +237,7 @@ class ExpenseFragment(val expense: ExpenseDTO, val successCallback: () -> Unit):
     }
 
     fun showDatePicker() {
-        val date = viewmodel.expense.value!!.date
+        val date = viewmodel.expense.value!!.expense.date
         val year = date.year
         val month = date.month
         val day = date.date

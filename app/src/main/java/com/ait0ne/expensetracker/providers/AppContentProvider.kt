@@ -6,10 +6,13 @@ import android.content.ContentValues
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
+import android.util.Log
 import androidx.room.OnConflictStrategy
 import androidx.sqlite.db.SupportSQLiteQueryBuilder
 import com.ait0ne.expensetracker.db.ExpenseDB
+import com.ait0ne.expensetracker.models.Category
 import com.ait0ne.expensetracker.models.Expense
+import java.util.*
 
 private val sUriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
     /*
@@ -23,6 +26,8 @@ private val sUriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
      */
     addURI("com.ait0ne.expensetracker.provider", "expenses", 1)
     addURI("com.ait0ne.expensetracker.provider", "expenses/#", 2)
+    addURI("com.ait0ne.expensetracker.provider", "categories", 3)
+    addURI("com.ait0ne.expensetracker.provider", "categories/#", 4)
 
 }
 
@@ -33,6 +38,8 @@ class AppContentProvider(): ContentProvider() {
 
     companion object {
         val URI = Uri.parse("content://com.ait0ne.expensetracker.provider/expenses")
+
+        val CATEGORIES_URI = Uri.parse("content://com.ait0ne.expensetracker.provider/categories")
 
     }
 
@@ -56,8 +63,27 @@ class AppContentProvider(): ContentProvider() {
         return when (sUriMatcher.match(p0)) {
             1 -> {
 
-                db.openHelper.readableDatabase.query(SupportSQLiteQueryBuilder.builder("expenses").selection(p2, p1).columns(p3).orderBy(p4).create())
+                val URI = db.openHelper.readableDatabase.query("select expenses.*, categories.title as category_name from expenses join categories on expenses.category_id = categories.id where expenses.dirty = 1")
 
+
+                return URI
+            }
+            2 -> {
+                var id = p2
+
+
+                val URI = db.openHelper.readableDatabase.query("select expenses.*, categories.title  as category_name from expenses join categories on expenses.category_id = categories.id where expenses.cloud_id = ?", arrayOf(id))
+
+
+
+                return URI
+            }
+            3 -> {
+                val URI = db.openHelper.readableDatabase.query("select * from categories")
+
+
+
+                return URI
             }
             else -> {
                 throw IllegalArgumentException()
@@ -75,6 +101,16 @@ class AppContentProvider(): ContentProvider() {
            }
            2 -> {
                return "vnd.android.cursor.item/vnd.com.ait0ne.expensestracker.expenses"
+
+           }
+           3 -> {
+
+
+
+               return "vnd.android.cursor.dir/vnd.com.ait0ne.expensestracker.categories"
+           }
+           4 -> {
+               return "vnd.android.cursor.item/vnd.com.ait0ne.expensestracker.categories"
            }
 
            else -> {
@@ -84,22 +120,40 @@ class AppContentProvider(): ContentProvider() {
     }
 
     override fun insert(p0: Uri, p1: ContentValues?): Uri? {
+        Log.i("Provider", "category3")
         return when (sUriMatcher.match(p0)) {
             1 -> {
                 val expense = Expense.fromContentValues(p1)
 
                 expense?.let {
-
-//                    val inserted =  db.getExpenseDao().upsertSync(it)
+                    Log.i("Provider", "expense" + p1.toString())
                     val inserted = db.openHelper.writableDatabase.insert("expenses", OnConflictStrategy.REPLACE, p1)
 
                     return ContentUris.withAppendedId(p0, inserted)
                 }
 
+
+                Log.i("Provider", "category2")
+
                 throw java.lang.IllegalArgumentException()
 
             }
+
+            3 -> {
+                val category = Category.fromContentValues(p1)
+
+                category?.let {
+
+                    val inserted = db.openHelper.writableDatabase.insert("categories", OnConflictStrategy.REPLACE, p1)
+
+                    return ContentUris.withAppendedId(p0, inserted)
+                }
+                Log.i("Provider", p1.toString())
+                Log.i("Provider", category.toString())
+                throw java.lang.IllegalArgumentException()
+            }
             else -> {
+                Log.i("Provider", p0.toString())
                 throw IllegalArgumentException()
             }
         }
@@ -109,12 +163,6 @@ class AppContentProvider(): ContentProvider() {
         return when (sUriMatcher.match(p0)) {
             2 -> {
 
-
-                val id = p0.lastPathSegment?.toLong()
-                id?.let {
-                    return db.getExpenseDao().deleteExpenseByIdSync(id)
-
-                }
 
 
                 throw IllegalArgumentException()
@@ -132,9 +180,8 @@ class AppContentProvider(): ContentProvider() {
                 val expense = Expense.fromContentValues(p1)
 
                 expense?.let {
-
-//                    db.getExpenseDao().upsertSync(it)
-                    db.openHelper.writableDatabase.update("expenses", OnConflictStrategy.REPLACE, p1, "where id = ?",
+                    //                    db.getExpenseDao().upsertSync(it)
+                    db.openHelper.writableDatabase.update("expenses", OnConflictStrategy.REPLACE, p1, "id = ?",
                         arrayOf(expense.id)
                     )
 
@@ -145,6 +192,7 @@ class AppContentProvider(): ContentProvider() {
                 throw java.lang.IllegalArgumentException()
 
             }
+
             else -> {
                 throw IllegalArgumentException()
             }

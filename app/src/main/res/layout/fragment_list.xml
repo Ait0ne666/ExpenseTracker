@@ -60,7 +60,7 @@
             android:textSize="12sp"
             android:spinnerMode="dropdown"
             android:background="@null"
-            android:selectedItemPosition="@={viewModel.selectedCategory}"
+            android:selectedItemPosition="@{viewModel.selectedCategory}"
             />
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvExpensesList"

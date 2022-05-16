@@ -5,11 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ait0ne.expensetracker.R
 import com.ait0ne.expensetracker.repositories.AuthRepository
+import com.ait0ne.expensetracker.repositories.LocalRepository
 import com.ait0ne.expensetracker.utils.Resource
 import kotlinx.coroutines.launch
 import retrofit2.Response
 
-class AuthViewModel(val authRepository: AuthRepository) : ViewModel() {
+class AuthViewModel(val authRepository: AuthRepository, val localRepository: LocalRepository) : ViewModel() {
 
 
     val login: MutableLiveData<String> = MutableLiveData()

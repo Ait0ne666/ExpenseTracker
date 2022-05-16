@@ -6,11 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.ait0ne.expensetracker.db.dao.ExpenseDAO
+import com.ait0ne.expensetracker.models.Category
 import com.ait0ne.expensetracker.models.Expense
 
 
 @Database(
-    entities = [Expense::class],
+    entities = [Expense::class, Category::class],
     version = 1
 )
 @TypeConverters(Converters::class)

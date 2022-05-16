@@ -57,6 +57,6 @@ interface ExpensesAPI {
     suspend fun sync(
         @Body
         body: SyncDTO
-    ):Response<SyncDTO>
+    ):Response<SyncResponseDTO>
 }
 

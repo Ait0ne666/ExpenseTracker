@@ -26,7 +26,7 @@
         android:label="ExpenseFragment" >
         <argument
             android:name="expense"
-            app:argType="com.ait0ne.expensetracker.models.ExpenseDTO" />
+            app:argType="com.ait0ne.expensetracker.models.ExpenseWithCategory" />
     </fragment>
     <fragment
         android:id="@+id/authFragment"
@@ -48,6 +48,39 @@
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_authFragment_to_graphFragment"
+            app:destination="@id/graphFragment"
+            app:popUpTo="@id/main_navigation_graph"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_authFragment_to_syncFragment2"
+            app:destination="@id/syncFragment2"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out"
+            app:popUpTo="@id/main_navigation_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/syncFragment2"
+        android:name="com.ait0ne.expensetracker.fragments.SyncFragment"
+        android:label="SyncFragment" >
+        <action
+            android:id="@+id/action_syncFragment2_to_mainFragment"
+            app:destination="@id/mainFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out"
+            app:popUpTo="@id/main_navigation_graph"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_syncFragment2_to_listFragment"
+            app:destination="@id/listFragment"
+            app:popUpTo="@id/main_navigation_graph"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_syncFragment2_to_graphFragment"
             app:destination="@id/graphFragment"
             app:popUpTo="@id/main_navigation_graph"
             app:popUpToInclusive="true" />

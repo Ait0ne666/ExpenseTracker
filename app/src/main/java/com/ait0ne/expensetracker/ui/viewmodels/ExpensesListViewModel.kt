@@ -4,153 +4,191 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ait0ne.expensetracker.R
-import com.ait0ne.expensetracker.models.Category
+import com.ait0ne.expensetracker.models.*
 import com.ait0ne.expensetracker.models.Currency
-import com.ait0ne.expensetracker.models.Expense
-import com.ait0ne.expensetracker.models.ExpenseDTO
 import com.ait0ne.expensetracker.models.dto.DayExpensesRequest
 import com.ait0ne.expensetracker.models.dto.MonthExpensesDTO
 import com.ait0ne.expensetracker.repositories.CategoriesRepository
 import com.ait0ne.expensetracker.repositories.ExpensesRepository
+import com.ait0ne.expensetracker.repositories.LocalRepository
+import com.ait0ne.expensetracker.utils.CurrencyUtils
 import com.ait0ne.expensetracker.utils.Resource
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlinx.coroutines.flow.collect
 
-val months = listOf("январь","февраль","март", "апрель","май","июнь","июль","август","сентябрь", "октябрь","ноябрь","декабрь",)
+val months = listOf(
+    "январь",
+    "февраль",
+    "март",
+    "апрель",
+    "май",
+    "июнь",
+    "июль",
+    "август",
+    "сентябрь",
+    "октябрь",
+    "ноябрь",
+    "декабрь",
+)
 
-class ExpensesListViewModel(var expensesRepository: ExpensesRepository, var categoriesRepository: CategoriesRepository, private val currencyInit: Currency): ViewModel() {
+class ExpensesListViewModel(
+    var expensesRepository: ExpensesRepository,
+    var categoriesRepository: CategoriesRepository,
+    private val localRepository: LocalRepository,
+    private val currencyInit: Currency
+) : ViewModel() {
 
 
     var expenses: MutableLiveData<Resource<MonthExpensesDTO>> = MutableLiveData()
+
+
+
     var options: MutableLiveData<List<String>> = MutableLiveData(arrayListOf("Все"))
     var categories: MutableList<Category> = mutableListOf()
-    var selectedCategory:MutableLiveData<Int> = MutableLiveData(0)
+    var selectedCategory: MutableLiveData<Int> = MutableLiveData(0)
     var selectedMonth: MutableLiveData<Date> = MutableLiveData(Date())
 
-    var monthString: MutableLiveData<String> = MutableLiveData("Траты за " + months[selectedMonth.value?.month ?: 0])
+    var monthString: MutableLiveData<String> =
+        MutableLiveData("Траты за " + months[selectedMonth.value?.month ?: 0])
 
     val currency: MutableLiveData<Currency> = MutableLiveData(currencyInit)
+    private var job = Job()
+        get() {
+            if (field.isCancelled) field = Job()
+            return field
+        }
 
     init {
 
 
         getCategoriesList()
-        getTotalExpenses(selectedMonth.value!!, null);
+        getLocalExpenses(selectedMonth.value!!, null);
 
     }
 
-    private fun getTotalExpenses(date: Date, category: String?) = viewModelScope.launch {
+    private fun getLocalExpenses(date: Date, category: Int?) {
+        if (job.isActive) {
+            job.cancel()
+        }
 
-        if (expenses.value == null ) {
+        getExpenses(date, category)
+    }
+
+
+    private fun getExpenses(date: Date, category: Int?) = viewModelScope.launch(job) {
+        if (expenses.value == null) {
             expenses.postValue(Resource.Loading())
         }
 
 
-        val response = expensesRepository.monthExpenses(date, currency.value!!, category)
+        val expensesLocal = expensesRepository.getExpensesForMonth(category, date)
+
+        expensesLocal.collect { data ->
+            var total = 0f
+            val newExpenses = arrayListOf<ExpenseWithCategory>()
+            val rates = localRepository.getRates()
 
 
-        val result = handleExpensesResponse(response)
 
 
-        expenses.postValue(result)
+            data.forEach {
+
+                val currentAmount = if (it.expense.currency == currency.value) {
+                    it.expense.amount
+                } else {
+                    CurrencyUtils.convertCurrency(
+                        it.expense.amount,
+                        it.expense.currency,
+                        currency.value!!,
+                        rates
+                    )
+                }
+
+
+                total += currentAmount
+                newExpenses.add(
+                    ExpenseWithCategory(
+                        expense = Expense(
+                            id = it.expense.id!!,
+                            title = it.expense.title,
+                            category_id = it.category.id!!,
+                            amount = currentAmount,
+                            date = it.expense.date,
+                            currency = currency.value!!,
+                            created_at = it.expense.created_at,
+                            updated_at = it.expense.updated_at,
+                            deleted_at = it.expense.deleted_at,
+                            cloud_id = it.expense.cloud_id,
+                            dirty = it.expense.dirty
+
+                        ),
+                        category = Category(
+                            id = it.category.id,
+                            title = it.category.title.capitalize(),
+                            cloud_id = it.category.cloud_id
+                        )
+                    )
+                )
+            }
+
+
+            expenses.postValue(Resource.Success(MonthExpensesDTO(total, newExpenses)))
+
+        }
+
+
     }
+
 
     private fun getCategoriesList() = viewModelScope.launch {
 
 
-        val response = categoriesRepository.getCategories()
+        val cats = categoriesRepository.getCategories()
 
-        val cats = handleCategoriesResponse(response)
 
-        cats?.let {
+        cats?.collect {
             var new_options = it.map { c ->
-                c.title
+                c.title.capitalize()
             }
             var mutOptions = mutableListOf<String>()
             mutOptions.add("Все")
-            mutOptions.addAll(1,new_options)
+            mutOptions.addAll(1, new_options)
             categories = it
             options.postValue(mutOptions)
         }
     }
 
 
-    private fun handleExpensesResponse(response: Response<MonthExpensesDTO>): Resource<MonthExpensesDTO> {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                return Resource.Success(result)
-            }
-
-
-        }
-
-
-        return Resource.Error("Неизвестная ошибка", data = expenses.value?.data)
-
-    }
-
-
-    private fun handleCategoriesResponse(response: Response<MutableList<Category>>): MutableList<Category>? {
-
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-
-                return result
-            }
-
-
-        }
-
-
-        return null
-
-    }
-
-
     fun updateExpenses() {
-        var category: String?
+        var category: Int?
 
         if (selectedCategory.value == 0) {
             category = null
         } else {
-            category = categories[selectedCategory.value!!-1].id
+            category = categories[selectedCategory.value!! - 1].id
         }
 
-        getTotalExpenses(selectedMonth.value!!, category)
+        getLocalExpenses(selectedMonth.value!!, category)
 
     }
 
 
     fun updateExpenses(date: Date) {
-        var category: String?
+        var category: Int?
 
         if (selectedCategory.value == 0) {
             category = null
         } else {
-            category = categories[selectedCategory.value!!-1].id
+            category = categories[selectedCategory.value!! - 1].id
         }
 
-        getTotalExpenses(date, category)
+        getLocalExpenses(date, category)
 
-    }
-
-    fun updateData() {
-        var category: String?
-
-        if (selectedCategory.value == 0) {
-            category = null
-        } else {
-            category = categories[selectedCategory.value!!-1].id
-        }
-
-        getTotalExpenses(selectedMonth.value!!, category)
-
-        getCategoriesList()
     }
 
 
@@ -162,40 +200,13 @@ class ExpensesListViewModel(var expensesRepository: ExpensesRepository, var cate
     }
 
 
-
     fun deleteExpense(position: Int) = viewModelScope.launch {
 
+        val expenseToDelete = expenses.value!!.data!!.expenses[position]
 
 
-        val currentDTO = expenses.value!!.data!!
-        val expense = expenses.value!!.data!!.expenses
-        val deleted = expense.removeAt(position)
-
-        expenses.postValue(Resource.Success(currentDTO.copy(month_total = currentDTO.month_total - deleted.amount, expenses = expense)))
-
-        val response = expensesRepository.deleteExpense(deleted.id)
-
-        val result = handleDeleteExpenseResponse(response)
-
-        when (result) {
-            is Resource.Error -> {
-                expenses.postValue(Resource.Success(currentDTO))
-            }
-            else -> {}
-        }
+        expensesRepository.deleteByID(expenseToDelete.expense.id!!)
     }
 
-    fun handleDeleteExpenseResponse(response: Response<String>): Resource<String> {
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
 
-                return Resource.Success(result)
-            }
-
-
-        }
-
-
-        return Resource.Error("Could not delete")
-    }
 }

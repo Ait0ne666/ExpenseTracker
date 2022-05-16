@@ -10,5 +10,8 @@ data class CreateExpenseRequest (
     val date: Date,
     val currency: Currency,
     val title: String?,
-    val id: String?
+    val created_at: Date?,
+    val cloud_id: String?,
+
+    val id: Int?
         ): Serializable

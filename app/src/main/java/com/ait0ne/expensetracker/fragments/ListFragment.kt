@@ -101,6 +101,19 @@ class ListFragment: Fragment(R.layout.fragment_list) {
 
         viewmodel.options.observe(viewLifecycleOwner) {
             sCategory.adapter = ArrayAdapter(requireContext(), R.layout.custom_dropdown_item, it)
+            sCategory.setSelection(viewmodel.selectedCategory.value ?: 0, true)
+
+
+            sCategory.onItemSelectedListener =object: AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+                    viewmodel.selectedCategory.postValue(p2)
+                }
+
+                override fun onNothingSelected(p0: AdapterView<*>?) {
+
+                }
+
+            }
         }
 
 
@@ -111,19 +124,19 @@ class ListFragment: Fragment(R.layout.fragment_list) {
 
 
 
-        viewmodel.updateData()
-
-
         tvCurrentMonth.setOnClickListener {
             showDatePicker()
         }
 
         expensesAdapter.setOnItemClickListener { expense ->
             val dialog = ExpenseFragment(expense) {
-                viewmodel.updateData()
+//                viewmodel.updateData()
             }
             dialog.show(parentFragmentManager, "")
         }
+
+
+
     }
 
 
